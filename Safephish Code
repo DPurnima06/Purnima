@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SafePhish 🐬</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: white;
+    text-align: center;
+    padding: 50px;
+}
+
+.container {
+    background: rgba(30, 41, 59, 0.7);
+    backdrop-filter: blur(10px);
+    padding: 30px;
+    border-radius: 16px;
+    width: 420px;
+    margin: auto;
+    box-shadow: 0 0 25px rgba(0,0,0,0.7);
+}
+
+h2 {
+    margin-bottom: 10px;
+}
+
+input {
+    width: 90%;
+    padding: 12px;
+    margin-top: 15px;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+}
+
+.result {
+    margin-top: 20px;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.safe { color: lightgreen; }
+.warning { color: yellow; }
+.danger { color: red; }
+
+ul {
+    text-align: left;
+    margin-top: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>🔐 SafePhish 🐬 </h2>
+
+    <input type="text" id="urlInput" placeholder="Enter website URL" oninput="checkURL()">
+
+    <div class="result" id="result"></div>
+    <ul id="reasons"></ul>
+</div>
+
+<script>
+function checkURL() {
+    let url = document.getElementById("urlInput").value.trim();
+    let result = document.getElementById("result");
+    let reasons = document.getElementById("reasons");
+
+    reasons.innerHTML = "";
+
+    if (url === "") {
+        result.innerHTML = "";
+        return;
+    }
+
+    // Loading effect
+    result.innerHTML = "🔍 Checking...";
+    result.className = "result";
+
+    let score = 0;
+
+    // ✅ URL validation
+    try {
+        new URL(url);
+    } catch (e) {
+        result.innerHTML = "❌ Invalid URL format";
+        result.className = "result danger";
+        return;
+    }
+
+    // Rule 1: HTTPS
+    if (!url.startsWith("https://")) {
+        addReason("Website does not use HTTPS → Not secure");
+        score++;
+    }
+
+    // Rule 2: Suspicious keywords
+    let keywords = ["login", "verify", "bank", "secure", "account", "update", "free"];
+    for (let word of keywords) {
+        if (url.toLowerCase().includes(word)) {
+            addReason("Contains suspicious word: " + word);
+            score++;
+            break;
+        }
+    }
+
+    // Rule 3: Long URL
+    if (url.length > 60) {
+        addReason("URL is too long (possible phishing)");
+        score++;
+    }
+
+    // Rule 4: Special characters
+    if (url.includes("@") || url.includes("-")) {
+        addReason("Contains unusual symbols (@ or -)");
+        score++;
+    }
+
+    // Rule 5: IP address detection
+    let ipPattern = /(\d{1,3}\.){3}\d{1,3}/;
+    if (ipPattern.test(url)) {
+        addReason("Uses IP address instead of domain");
+        score++;
+    }
+
+    // Rule 6: Too many dots
+    let dotCount = (url.match(/\./g) || []).length;
+    if (dotCount > 3) {
+        addReason("Too many dots (fake subdomains)");
+        score++;
+    }
+
+    // Rule 7: Suspicious domain extensions
+    let suspiciousTLD = [".tk", ".ml", ".ga", ".cf"];
+    for (let tld of suspiciousTLD) {
+        if (url.includes(tld)) {
+            addReason("Suspicious domain extension: " + tld);
+            score++;
+            break;
+        }
+    }
+
+    // Final result
+    if (score === 0) {
+        result.innerHTML = "✅ Safe Website<br>Risk Score: " + score;
+        result.className = "result safe";
+    } else if (score <= 2) {
+        result.innerHTML = "⚠️ Suspicious Website<br>Risk Score: " + score;
+        result.className = "result warning";
+    } else {
+        result.innerHTML = "❌ Dangerous Website (Phishing)<br>Risk Score: " + score;
+        result.className = "result danger";
+    }
+}
+
+// Add reason function
+function addReason(text) {
+    let li = document.createElement("li");
+    li.innerText = text;
+    document.getElementById("reasons").appendChild(li);
+}
+</script>
+
+</body>
+</html>
